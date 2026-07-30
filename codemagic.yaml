@@ -11,7 +11,6 @@ workflows:
           if [ ! -f android/app/build.gradle ]; then
             echo "android/ missing, generating with flutter create..."
             flutter create --platforms=android --org com.rewardapp .
-            sed -i 's/applicationId ".*"/applicationId "com.rewardapp.app"/' android/app/build.gradle
           fi
       - name: Get Flutter packages
         script: |
