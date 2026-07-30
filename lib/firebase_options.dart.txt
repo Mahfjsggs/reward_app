@@ -1,0 +1,33 @@
+// File generated manually based on google-services.json
+// لا تعدل هذا الملف يدويًا إلا إذا غيرت مشروع Firebase
+
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'هذا المشروع مُعد لأندرويد فقط حاليًا.',
+      );
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      default:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions are not supported for this platform.',
+        );
+    }
+  }
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCnreZ311pn11kwjxB2QLQoHLpOjSlokS0',
+    appId: '1:724459478422:android:bd7835b98e1b5c66a411b7',
+    messagingSenderId: '724459478422',
+    projectId: 'reward-app-6ef49',
+    storageBucket: 'reward-app-6ef49.firebasestorage.app',
+  );
+}
