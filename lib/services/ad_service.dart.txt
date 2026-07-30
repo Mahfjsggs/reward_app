@@ -1,0 +1,54 @@
+import 'package:cloud_functions/cloud_functions.dart';
+
+/// نسخة مؤقتة بدون مكتبة الإعلانات الحقيقية (google_mobile_ads)،
+/// بسبب تعارض إصدار Gradle عطّل عملية البناء.
+/// السلوك المنطقي (استدعاء Cloud Functions) لسه شغال،
+/// بس ما في إعلان حقيقي يترسم على الشاشة حاليًا.
+/// لاحقًا: نعيد إضافة google_mobile_ads ونربطها هنا من جديد.
+class AdService {
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+
+  bool isAdReady = true;
+
+  Future<void> loadRewardedAd({
+    required void Function() onLoaded,
+    required void Function(String error) onFailed,
+  }) async {
+    // مؤقتًا: نعتبر الإعلان جاهز فورًا
+    onLoaded();
+  }
+
+  Future<String> startAdSession() async {
+    final result = await _functions
+        .httpsCallable('startAdSession')
+        .call({'adNetwork': 'admob', 'adType': 'rewarded'});
+
+    return result.data['eventId'] as String;
+  }
+
+  Future<void> showAd({
+    required String eventId,
+    required void Function() onUserEarnedReward,
+    required void Function() onAdClosed,
+    required void Function(String error) onFailed,
+  }) async {
+    // مؤقتًا: نحاكي مشاهدة إعلان كاملة بعد تأخير بسيط
+    await Future.delayed(const Duration(seconds: 2));
+
+    try {
+      await _confirmAdCompletion(eventId);
+      onUserEarnedReward();
+      onAdClosed();
+    } catch (e) {
+      onFailed(e.toString());
+    }
+  }
+
+  Future<void> _confirmAdCompletion(String eventId) async {
+    await _functions
+        .httpsCallable('grantAdReward')
+        .call({'eventId': eventId});
+  }
+
+  void dispose() {}
+}
