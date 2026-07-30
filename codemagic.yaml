@@ -5,6 +5,7 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
+      android_signing: false
     scripts:
       - name: Ensure android platform files exist
         script: |
@@ -17,7 +18,7 @@ workflows:
           flutter packages pub get
       - name: Build Android APK (debug)
         script: |
-          flutter build apk --debug
+          flutter build apk --debug --suppress-analytics
     artifacts:
       - build/**/outputs/**/*.apk
       - build/**/outputs/**/mapping.txt
