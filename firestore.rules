@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny([
+               'pointsBalance',
+               'totalPointsEarned',
+               'totalPointsSpent',
+               'withdrawableBalance',
+               'role',
+               'status'
+             ]);
+
+      allow delete: if false;
+    }
+
+    // كل الكتابة على هذه المجموعات تمر حصرًا عبر Cloud Functions
+    match /adEvents/{eventId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /pointTransactions/{txId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /withdrawals/{withdrawalId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /revenueReports/{reportId} {
+      allow read, write: if false;
+    }
+
+    match /rewardPools/{poolId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /weeklyLeaderboards/{weekId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /adminLogs/{logId} {
+      allow read, write: if false;
+    }
+  }
+}
