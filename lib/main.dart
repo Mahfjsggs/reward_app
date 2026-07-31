@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'app/app.dart';
 import 'firebase_options.dart';
@@ -11,8 +10,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  await MobileAds.instance.initialize();
 
   runApp(const RewardApp());
 }
