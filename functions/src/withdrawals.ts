@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
 const db = admin.firestore();
 
@@ -66,3 +67,30 @@ export const requestWithdrawal = onCall(async (request) => {
 
   return { success: true, withdrawalId };
 });
+
+/**
+ * عند تحديث حالة السحب إلى "مكتمل" من طرف الأدمن (يدويًا في الكونسول
+ * أو عبر أداة إدارية لاحقًا)، ننشئ نسخة عامة آمنة تظهر في واجهة
+ * "آخر السحوبات" للمستخدمين، دون كشف أي بيانات حساسة.
+ */
+export const onWithdrawalCompleted = onDocumentUpdated(
+  "withdrawals/{withdrawalId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+
+    if (!before || !after) return;
+    if (before.status === after.status) return;
+    if (after.status !== "completed") return;
+
+    const userSnap = await db.collection("users").doc(after.userId).get();
+    const userName = (userSnap.data()?.name as string) || "مستخدم";
+
+    await db.collection("publicWithdrawals").add({
+      displayName: userName,
+      amount: after.amount,
+      currency: after.currency,
+      completedAt: admin.firestore.Timestamp.now(),
+    });
+  }
+);
