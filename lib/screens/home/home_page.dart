@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
+import '../../features/withdrawals_feed/withdrawals_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -91,6 +92,20 @@ class HomePage extends StatelessWidget {
                 onPressed: () => Navigator.pushNamed(context, '/rewards'),
                 icon: const Icon(Icons.play_circle),
                 label: const Text('شاهد إعلانًا واربح نقاط'),
+              ),
+              const SizedBox(height: 20),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.list_alt),
+                  title: const Text('آخر السحوبات'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WithdrawalsFeedPage(),
+                    ),
+                  ),
+                ),
               ),
             ],
           );
