@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../features/rewards/rewards_page.dart';
 import '../features/wallet/wallet_page.dart';
+import '../features/withdrawals_feed/withdrawals_page.dart';
 import '../screens/auth/login_page.dart';
 import '../screens/auth/register_page.dart';
 import '../screens/home/home_page.dart';
@@ -63,6 +64,7 @@ class RewardApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/rewards': (context) => const RewardsPage(),
         '/wallet': (context) => const WalletPage(),
+        '/withdrawals': (context) => const WithdrawalsFeedPage(),
       },
     );
   }
