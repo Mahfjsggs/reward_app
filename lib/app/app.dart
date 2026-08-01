@@ -17,8 +17,44 @@ class RewardApp extends StatelessWidget {
       title: 'Reward App',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        scaffoldBackgroundColor: Colors.grey.shade100,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F0F14),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFBB86FC),
+          secondary: Color(0xFFFFD54F),
+          surface: Color(0xFF1A1A22),
+          onPrimary: Colors.black,
+          onSurface: Colors.white,
+        ),
+        cardColor: const Color(0xFF1A1A22),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0F0F14),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFBB86FC),
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1A1A22),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          labelStyle: const TextStyle(color: Colors.white70),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+        ),
       ),
       home: const AuthGate(),
       routes: {
