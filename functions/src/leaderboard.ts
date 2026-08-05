@@ -3,10 +3,6 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 
 const db = admin.firestore();
 
-/**
- * نفس منطق تحديد الأسبوع المستخدم في تطبيق Flutter (lib/features/leaderboard)
- * يجب أن يطابق تمامًا حتى يقرأ التطبيق نفس المستند الصحيح.
- */
 function getWeekId(date: Date): string {
   const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
   const daysPassed = Math.floor(
@@ -17,7 +13,7 @@ function getWeekId(date: Date): string {
 }
 
 function getStartOfWeek(date: Date): Date {
-  const day = date.getDay(); // 0 = Sunday
+  const day = date.getDay();
   const start = new Date(date);
   start.setDate(date.getDate() - day);
   start.setHours(0, 0, 0, 0);
@@ -25,9 +21,9 @@ function getStartOfWeek(date: Date): Date {
 }
 
 /**
- * تعمل كل ساعة: تجمع نقاط كل مستخدم المكتسبة من مشاهدة الإعلانات
- * خلال الأسبوع الحالي، وتبني قائمة بأفضل 50 مستخدمًا، ثم تحفظها
- * في weeklyLeaderboards/{weekId}.
+ * تعمل كل ساعة: تجمع عدد الإعلانات المشاهدة لكل مستخدم خلال الأسبوع
+ * الحالي (من adsWatched)، وترتب أفضل 50 مستخدمًا حسب عدد الإعلانات
+ * (مو حسب الدولار المكسوب)، وتحفظها في weeklyLeaderboards/{weekId}.
  */
 export const updateWeeklyLeaderboard = onSchedule(
   { schedule: "every 60 minutes", timeZone: "Asia/Baghdad" },
@@ -37,7 +33,7 @@ export const updateWeeklyLeaderboard = onSchedule(
     const startOfWeek = getStartOfWeek(now);
 
     const txSnap = await db
-      .collection("pointTransactions")
+      .collection("earningsTransactions")
       .where("type", "==", "ad_reward")
       .where(
         "createdAt",
@@ -46,21 +42,21 @@ export const updateWeeklyLeaderboard = onSchedule(
       )
       .get();
 
-    const totals = new Map<string, { points: number; adsWatched: number }>();
+    const totals = new Map<string, { earned: number; adsWatched: number }>();
 
     txSnap.forEach((doc) => {
       const data = doc.data();
       const uid = data.userId as string;
-      const points = (data.points as number) || 0;
+      const amount = (data.amount as number) || 0;
 
-      const current = totals.get(uid) || { points: 0, adsWatched: 0 };
-      current.points += points;
+      const current = totals.get(uid) || { earned: 0, adsWatched: 0 };
+      current.earned += amount;
       current.adsWatched += 1;
       totals.set(uid, current);
     });
 
     const sorted = Array.from(totals.entries())
-      .sort((a, b) => b[1].points - a[1].points)
+      .sort((a, b) => b[1].adsWatched - a[1].adsWatched)
       .slice(0, 50);
 
     const entries = await Promise.all(
@@ -70,8 +66,8 @@ export const updateWeeklyLeaderboard = onSchedule(
         return {
           userId: uid,
           displayName: name,
-          points: stats.points,
           adsWatched: stats.adsWatched,
+          earned: stats.earned,
         };
       })
     );
