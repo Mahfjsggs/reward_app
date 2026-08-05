@@ -3,8 +3,8 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = admin.firestore();
 
-// وزّع الجوائز على 8 قطاعات بالعجلة - رتبها بالتصميم بنفس هذا الترتيب بالضبط
-const WHEEL_PRIZES = [20, 50, 30, 20, 50, 30, 20, 50];
+// جوائز عجلة الحظ بالدولار مباشرة - بونص إضافي فوق أرباح الإعلانات العادية
+const WHEEL_PRIZES = [0.05, 0.10, 0.07, 0.05, 0.10, 0.07, 0.05, 0.10];
 
 export const spinWheel = onCall(async (request) => {
   const uid = request.auth?.uid;
@@ -19,7 +19,6 @@ export const spinWheel = onCall(async (request) => {
     const userData = userSnap.data() || {};
 
     const now = admin.firestore.Timestamp.now();
-    // تاريخ اليوم محسوب من وقت السيرفر نفسه - المستخدم ما يقدر يتلاعب فيه أبدًا
     const todayStr = now.toDate().toISOString().slice(0, 10);
 
     if (userData.lastSpinDate === todayStr) {
@@ -29,26 +28,24 @@ export const spinWheel = onCall(async (request) => {
       );
     }
 
-    // السيرفر يختار الجائزة عشوائيًا - مو التطبيق - عشان ما ينخدع
     const prizeIndex = Math.floor(Math.random() * WHEEL_PRIZES.length);
-    const prizePoints = WHEEL_PRIZES[prizeIndex];
+    const prizeAmount = WHEEL_PRIZES[prizeIndex];
 
     tx.update(userRef, {
       lastSpinDate: todayStr,
-      pointsBalance: admin.firestore.FieldValue.increment(prizePoints),
-      totalPointsEarned: admin.firestore.FieldValue.increment(prizePoints),
+      earningsBalance: admin.firestore.FieldValue.increment(prizeAmount),
+      totalEarned: admin.firestore.FieldValue.increment(prizeAmount),
       lastActiveAt: now,
     });
 
-    const txRef = db.collection("pointTransactions").doc();
+    const txRef = db.collection("earningsTransactions").doc();
     tx.set(txRef, {
       userId: uid,
       type: "wheel_spin",
-      points: prizePoints,
+      amount: prizeAmount,
       createdAt: now,
     });
 
-    // نرجع prizeIndex عشان التطبيق يوقف العجلة بالضبط على نفس القطاع اللي اختاره السيرفر
-    return { success: true, prizeIndex, prizePoints };
+    return { success: true, prizeIndex, prizeAmount };
   });
 });
