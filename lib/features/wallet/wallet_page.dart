@@ -17,6 +17,8 @@ class _WalletPageState extends State<WalletPage> {
   final _amountController = TextEditingController();
   bool _submitting = false;
 
+  static const int pointsPerDollar = 500;
+
   Future<void> _submit() async {
     final amount = double.tryParse(_amountController.text.trim());
 
@@ -69,9 +71,10 @@ class _WalletPageState extends State<WalletPage> {
                     .doc(uid)
                     .snapshots(),
                 builder: (context, snapshot) {
-                  final balance =
-                      (snapshot.data?.data()?['withdrawableBalance'] ?? 0.0)
+                  final pointsBalance =
+                      (snapshot.data?.data()?['pointsBalance'] ?? 0)
                           .toDouble();
+                  final balance = pointsBalance / pointsPerDollar;
                   return Card(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
