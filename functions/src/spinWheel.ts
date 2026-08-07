@@ -3,8 +3,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = admin.firestore();
 
-// جوائز عجلة الحظ بالدولار مباشرة - بونص إضافي فوق أرباح الإعلانات العادية
-const WHEEL_PRIZES = [0.05, 0.10, 0.07, 0.05, 0.10, 0.07, 0.05, 0.10];
+const WHEEL_PRIZES = [20, 50, 30, 20, 50, 30, 20, 50];
 
 export const spinWheel = onCall(async (request) => {
   const uid = request.auth?.uid;
@@ -29,23 +28,23 @@ export const spinWheel = onCall(async (request) => {
     }
 
     const prizeIndex = Math.floor(Math.random() * WHEEL_PRIZES.length);
-    const prizeAmount = WHEEL_PRIZES[prizeIndex];
+    const prizePoints = WHEEL_PRIZES[prizeIndex];
 
     tx.update(userRef, {
       lastSpinDate: todayStr,
-      earningsBalance: admin.firestore.FieldValue.increment(prizeAmount),
-      totalEarned: admin.firestore.FieldValue.increment(prizeAmount),
+      pointsBalance: admin.firestore.FieldValue.increment(prizePoints),
+      totalPointsEarned: admin.firestore.FieldValue.increment(prizePoints),
       lastActiveAt: now,
     });
 
-    const txRef = db.collection("earningsTransactions").doc();
+    const txRef = db.collection("pointTransactions").doc();
     tx.set(txRef, {
       userId: uid,
       type: "wheel_spin",
-      amount: prizeAmount,
+      points: prizePoints,
       createdAt: now,
     });
 
-    return { success: true, prizeIndex, prizeAmount };
+    return { success: true, prizeIndex, prizePoints };
   });
 });
