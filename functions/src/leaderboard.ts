@@ -20,11 +20,6 @@ function getStartOfWeek(date: Date): Date {
   return start;
 }
 
-/**
- * تعمل كل ساعة: تجمع عدد الإعلانات المشاهدة لكل مستخدم خلال الأسبوع
- * الحالي (من adsWatched)، وترتب أفضل 50 مستخدمًا حسب عدد الإعلانات
- * (مو حسب الدولار المكسوب)، وتحفظها في weeklyLeaderboards/{weekId}.
- */
 export const updateWeeklyLeaderboard = onSchedule(
   { schedule: "every 60 minutes", timeZone: "Asia/Baghdad" },
   async () => {
@@ -33,7 +28,7 @@ export const updateWeeklyLeaderboard = onSchedule(
     const startOfWeek = getStartOfWeek(now);
 
     const txSnap = await db
-      .collection("earningsTransactions")
+      .collection("pointTransactions")
       .where("type", "==", "ad_reward")
       .where(
         "createdAt",
@@ -42,15 +37,15 @@ export const updateWeeklyLeaderboard = onSchedule(
       )
       .get();
 
-    const totals = new Map<string, { earned: number; adsWatched: number }>();
+    const totals = new Map<string, { points: number; adsWatched: number }>();
 
     txSnap.forEach((doc) => {
       const data = doc.data();
       const uid = data.userId as string;
-      const amount = (data.amount as number) || 0;
+      const points = (data.points as number) || 0;
 
-      const current = totals.get(uid) || { earned: 0, adsWatched: 0 };
-      current.earned += amount;
+      const current = totals.get(uid) || { points: 0, adsWatched: 0 };
+      current.points += points;
       current.adsWatched += 1;
       totals.set(uid, current);
     });
@@ -66,8 +61,8 @@ export const updateWeeklyLeaderboard = onSchedule(
         return {
           userId: uid,
           displayName: name,
+          points: stats.points,
           adsWatched: stats.adsWatched,
-          earned: stats.earned,
         };
       })
     );
