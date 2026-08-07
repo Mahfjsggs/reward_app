@@ -74,13 +74,19 @@ class _HomePageState extends State<HomePage> {
     if (action == 'daily_bonus') {
       _showLoadingDialog();
       final result = await _rewardService.claimDailyBonus();
-      Navigator.of(context).pop(); // إغلاق تحميل
+      if (!mounted) return;
+      Navigator.of(context).pop(); // إغلاق نافذة التحميل
 
-      _showMessageSnackBar(result['message']);
+      if (result['success'] == true) {
+        _showMessageSnackBar(result['message']);
+      } else {
+        _showMessageSnackBar('عذراً، الخدمة غير متوفرة حالياً.');
+      }
     } else if (action == 'referral') {
       _showReferralDialog();
     } else {
-      _showMessageSnackBar('قسم $action قيد التطوير والربط.');
+      // إظهار رسالة عربية واضحة للمستخدم بدون أي رموز إنجليزية
+      _showMessageSnackBar('هذا القسم قيد التطوير وسيتم إتاحته قريباً!');
     }
   }
 
@@ -110,6 +116,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.pop(context);
                 _showLoadingDialog();
                 final result = await _rewardService.applyReferralCode(code);
+                if (!mounted) return;
                 Navigator.pop(context);
                 _showMessageSnackBar(result['message']);
               }
