@@ -3,15 +3,11 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = admin.firestore();
 
-const POINTS_PER_AD = 5;
-const MIN_WATCH_SECONDS = 15; // أقل مدة معقولة لإعلان مكافأة حقيقي
-const MAX_ADS_PER_DAY = 40; // سقف يومي لمنع إساءة الاستخدام
-const MIN_SECONDS_BETWEEN_ADS = 20; // حد أدنى بين إعلان وآخر
+const POINTS_PER_AD = 7;
+const MIN_WATCH_SECONDS = 15;
+const MAX_ADS_PER_DAY = 40;
+const MIN_SECONDS_BETWEEN_ADS = 20;
 
-/**
- * الخطوة 1: يفتح المستخدم "جلسة" إعلان قبل عرضه.
- * هذا يمنع التطبيق من طلب مكافأة بدون أن يكون هناك سجل بدء موثوق في السيرفر.
- */
 export const startAdSession = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
@@ -20,7 +16,6 @@ export const startAdSession = onCall(async (request) => {
 
   const { adNetwork = "admob", adType = "rewarded" } = request.data || {};
 
-  // تحقق من السقف اليومي ومن الفاصل الزمني بين الإعلانات
   const now = admin.firestore.Timestamp.now();
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -68,18 +63,6 @@ export const startAdSession = onCall(async (request) => {
   return { eventId: eventRef.id };
 });
 
-/**
- * الخطوة 2: بعد أن يعرض التطبيق الإعلان ويحصل على onUserEarnedReward،
- * يستدعي هذه الدالة. نتحقق هنا من:
- * - أن الجلسة موجودة وتخص نفس المستخدم
- * - أنها لم تُمنح مكافأة من قبل (لمنع الاستخدام المتكرر لنفس eventId)
- * - أن الوقت المنقضي منذ البدء منطقي (ليس أقل من MIN_WATCH_SECONDS)
- *
- * ملاحظة: في بيئة إنتاج حقيقية، يفضّل أيضًا ربط هذا بآلية "Server-Side
- * Verification" التي توفرها AdMob (SSV)، والتي ترسل توقيعًا موثوقًا
- * من جوجل مباشرة إلى نقطة نهاية في السيرفر بدل الاعتماد فقط على استدعاء
- * العميل. هذا التحقق هنا يعتبر خط دفاع إضافي، وليس بديلاً عن SSV.
- */
 export const grantAdReward = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
@@ -108,7 +91,6 @@ export const grantAdReward = onCall(async (request) => {
     }
 
     if (event.status !== "started") {
-      // تمنع محاولة استدعاء نفس eventId أكثر من مرة
       throw new HttpsError(
         "failed-precondition",
         "تم التعامل مع هذه الجلسة مسبقًا"
@@ -127,7 +109,6 @@ export const grantAdReward = onCall(async (request) => {
       );
     }
 
-    // كل شيء سليم -> نمنح النقاط
     tx.update(eventRef, {
       status: "verified",
       rewardPoints: POINTS_PER_AD,
