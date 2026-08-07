@@ -6,7 +6,6 @@ import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../features/withdrawals_feed/withdrawals_page.dart';
 import '../../features/leaderboard/leaderboard_page.dart';
-import '../spin_wheel_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -93,21 +92,6 @@ class HomePage extends StatelessWidget {
                 onPressed: () => Navigator.pushNamed(context, '/rewards'),
                 icon: const Icon(Icons.play_circle),
                 label: const Text('شاهد إعلانًا واربح نقاط'),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SpinWheelScreen(),
-                  ),
-                ),
-                icon: const Icon(Icons.casino),
-                label: const Text('عجلة الحظ اليومية 🎡'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4AF37),
-                  foregroundColor: Colors.black,
-                ),
               ),
               const SizedBox(height: 20),
               Card(
