@@ -14,6 +14,12 @@ class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> rewardTasks = [
     {
+      'title': 'سحب الأرباح',
+      'icon': Icons.account_balance_wallet_rounded,
+      'color': Colors.green,
+      'action': 'withdraw',
+    },
+    {
       'title': 'شاهد إعلان',
       'icon': Icons.play_circle_fill_rounded,
       'color': Colors.redAccent,
@@ -34,7 +40,7 @@ class _HomePageState extends State<HomePage> {
     {
       'title': 'نزّل تطبيقات واربح',
       'icon': Icons.get_app_rounded,
-      'color': Colors.green,
+      'color': Colors.teal,
       'action': 'download_apps',
     },
     {
@@ -46,7 +52,7 @@ class _HomePageState extends State<HomePage> {
     {
       'title': 'مهام بسيطة',
       'icon': Icons.check_box_rounded,
-      'color': Colors.teal,
+      'color': Colors.cyan,
       'action': 'simple_tasks',
     },
     {
@@ -71,11 +77,14 @@ class _HomePageState extends State<HomePage> {
 
   // التعامل مع الضغط على البطاقات
   Future<void> _handleTaskTap(String action) async {
-    if (action == 'daily_bonus') {
+    if (action == 'withdraw') {
+      _showMessageSnackBar('جاري فتح صفحة سحب الأرباح...');
+      // سنقوم بربط التوجيه لصفحة السحب فور إنشائها في الخطوة القادمة
+    } else if (action == 'daily_bonus') {
       _showLoadingDialog();
       final result = await _rewardService.claimDailyBonus();
       if (!mounted) return;
-      Navigator.of(context).pop(); // إغلاق نافذة التحميل
+      Navigator.of(context).pop();
 
       if (result['success'] == true) {
         _showMessageSnackBar(result['message']);
@@ -85,7 +94,6 @@ class _HomePageState extends State<HomePage> {
     } else if (action == 'referral') {
       _showReferralDialog();
     } else {
-      // إظهار رسالة عربية واضحة للمستخدم بدون أي رموز إنجليزية
       _showMessageSnackBar('هذا القسم قيد التطوير وسيتم إتاحته قريباً!');
     }
   }
