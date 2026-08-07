@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/reward_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -9,6 +10,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int userPoints = 0;
+  final RewardService _rewardService = RewardService();
 
   final List<Map<String, dynamic>> rewardTasks = [
     {
@@ -67,9 +69,69 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
-  void _handleTaskTap(String action) {
+  // التعامل مع الضغط على البطاقات
+  Future<void> _handleTaskTap(String action) async {
+    if (action == 'daily_bonus') {
+      _showLoadingDialog();
+      final result = await _rewardService.claimDailyBonus();
+      Navigator.of(context).pop(); // إغلاق تحميل
+
+      _showMessageSnackBar(result['message']);
+    } else if (action == 'referral') {
+      _showReferralDialog();
+    } else {
+      _showMessageSnackBar('قسم $action قيد التطوير والربط.');
+    }
+  }
+
+  // نافذة إدخال كود الإحالة
+  void _showReferralDialog() {
+    final TextEditingController controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إدخال رمز الإحالة', textAlign: TextAlign.center),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'أدخل الكود هنا',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final code = controller.text.trim();
+              if (code.isNotEmpty) {
+                Navigator.pop(context);
+                _showLoadingDialog();
+                final result = await _rewardService.applyReferralCode(code);
+                Navigator.pop(context);
+                _showMessageSnackBar(result['message']);
+              }
+            },
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  void _showMessageSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('جاري فتح الخيار: $action')),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -87,7 +149,6 @@ class _HomePageState extends State<HomePage> {
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
-            // بطاقة الرصيد
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(16),
@@ -112,7 +173,6 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            // قائمة المهام التسعة
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
