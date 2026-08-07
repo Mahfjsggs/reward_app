@@ -4,7 +4,9 @@ import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
 const db = admin.firestore();
 
-const MIN_WITHDRAWAL_USD = 5;
+// هذا المعدل داخلي بس، المستخدم ما يشوفه أبدًا بالواجهة
+const POINTS_PER_DOLLAR = 1500;
+const MIN_WITHDRAWAL_POINTS = 7500; // يعادل $5 داخليًا
 const WITHDRAWAL_COOLDOWN_DAYS = 15;
 
 export const requestWithdrawal = onCall(async (request) => {
@@ -34,25 +36,28 @@ export const requestWithdrawal = onCall(async (request) => {
         const daysLeft = Math.ceil(WITHDRAWAL_COOLDOWN_DAYS - daysSinceLast);
         throw new HttpsError(
           "failed-precondition",
-          `لا يمكنك السحب الآن، تبقى ${daysLeft} يوم قبل السحب التالي`
+          `لا يمكنك الاسترداد الآن، تبقى ${daysLeft} يوم قبل الطلب التالي`
         );
       }
     }
 
-    const earningsBalance = (user?.earningsBalance ?? 0) as number;
+    const pointsBalance = (user?.pointsBalance ?? 0) as number;
 
-    if (earningsBalance < MIN_WITHDRAWAL_USD) {
+    if (pointsBalance < MIN_WITHDRAWAL_POINTS) {
       throw new HttpsError(
         "failed-precondition",
-        `رصيدك الحالي أقل من الحد الأدنى للسحب ($${MIN_WITHDRAWAL_USD})`
+        "رصيدك الحالي من النقاط غير كافٍ للاسترداد بعد"
       );
     }
+
+    const amountUSD = pointsBalance / POINTS_PER_DOLLAR; // داخلي فقط، للأدمن
 
     const withdrawalRef = db.collection("withdrawals").doc();
 
     tx.set(withdrawalRef, {
       userId: uid,
-      amount: earningsBalance,
+      pointsRedeemed: pointsBalance,
+      amount: amountUSD, // يظهر بلوحة الأدمن بس، مو بواجهة المستخدم
       currency: "USD",
       status: "pending",
       method,
@@ -62,11 +67,11 @@ export const requestWithdrawal = onCall(async (request) => {
     });
 
     tx.update(userRef, {
-      earningsBalance: 0,
+      pointsBalance: 0,
       lastWithdrawalAt: now,
     });
 
-    return { withdrawalId: withdrawalRef.id, amount: earningsBalance };
+    return { withdrawalId: withdrawalRef.id, pointsRedeemed: pointsBalance };
   });
 
   return { success: true, ...result };
@@ -87,8 +92,7 @@ export const onWithdrawalCompleted = onDocumentUpdated(
 
     await db.collection("publicWithdrawals").add({
       displayName: userName,
-      amount: after.amount,
-      currency: after.currency,
+      pointsRedeemed: after.pointsRedeemed,
       completedAt: admin.firestore.Timestamp.now(),
     });
   }
