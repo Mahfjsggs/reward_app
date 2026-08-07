@@ -7,15 +7,11 @@ class WithdrawalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
-  /// السحب لا يُنشأ مباشرة في Firestore من التطبيق،
-  /// لأن السيرفر هو من يجب أن يتحقق من الحد الأدنى ومن withdrawableBalance
-  /// قبل قبول الطلب (لمنع طلب سحب أكبر من الرصيد الفعلي).
-  Future<void> requestWithdrawal({
-    required double amount,
-    required String method,
-  }) async {
+  /// الاسترداد لا يُنشأ مباشرة في Firestore من التطبيق، ولا يحتاج المستخدم
+  /// يكتب مبلغًا — السيرفر هو من يحسب النقاط المتاحة ويسترد كامل الرصيد
+  /// دفعة واحدة تلقائيًا.
+  Future<void> requestWithdrawal({String method = 'manual'}) async {
     await _functions.httpsCallable('requestWithdrawal').call({
-      'amount': amount,
       'method': method,
     });
   }
