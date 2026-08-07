@@ -82,10 +82,9 @@ class HomePage extends StatelessWidget {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.account_balance_wallet),
-                  title: const Text('الرصيد القابل للسحب'),
-                  subtitle: Text(
-                    '\$${(user.pointsBalance / 500).toStringAsFixed(2)}',
-                  ),
+                  title: const Text('استرداد النقاط'),
+                  subtitle: const Text('حوّل نقاطك إلى مكافأة'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => Navigator.pushNamed(context, '/wallet'),
                 ),
               ),
@@ -128,7 +127,7 @@ class HomePage extends StatelessWidget {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.list_alt),
-                  title: const Text('آخر السحوبات'),
+                  title: const Text('آخر الاستردادات'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => Navigator.push(
                     context,
