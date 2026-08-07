@@ -1,129 +1,158 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../models/user_model.dart';
-import '../../services/auth_service.dart';
-import '../../services/user_service.dart';
-import '../../features/withdrawals_feed/withdrawals_page.dart';
-import '../../features/leaderboard/leaderboard_page.dart';
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int userPoints = 0;
+
+  final List<Map<String, dynamic>> rewardTasks = [
+    {
+      'title': 'شاهد إعلان',
+      'icon': Icons.play_circle_fill_rounded,
+      'color': Colors.redAccent,
+      'action': 'watch_ad',
+    },
+    {
+      'title': 'الاستبيانات',
+      'icon': Icons.assignment_rounded,
+      'color': Colors.blueAccent,
+      'action': 'surveys',
+    },
+    {
+      'title': 'الألعاب واربح',
+      'icon': Icons.sports_esports_rounded,
+      'color': Colors.purple,
+      'action': 'games',
+    },
+    {
+      'title': 'نزّل تطبيقات واربح',
+      'icon': Icons.get_app_rounded,
+      'color': Colors.green,
+      'action': 'download_apps',
+    },
+    {
+      'title': 'العروض والاشتراكات',
+      'icon': Icons.local_offer_rounded,
+      'color': Colors.orange,
+      'action': 'offers',
+    },
+    {
+      'title': 'مهام بسيطة',
+      'icon': Icons.check_box_rounded,
+      'color': Colors.teal,
+      'action': 'simple_tasks',
+    },
+    {
+      'title': 'مكافأة الدخول اليومية',
+      'icon': Icons.local_fire_department_rounded,
+      'color': Colors.deepOrange,
+      'action': 'daily_bonus',
+    },
+    {
+      'title': 'الإحالة للأصدقاء',
+      'icon': Icons.group_add_rounded,
+      'color': Colors.indigo,
+      'action': 'referral',
+    },
+    {
+      'title': 'التصنيف الأسبوعي',
+      'icon': Icons.emoji_events_rounded,
+      'color': Colors.amber,
+      'action': 'leaderboard',
+    },
+  ];
+
+  void _handleTaskTap(String action) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('جاري فتح الخيار: $action')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-
-    if (firebaseUser == null) {
-      return const Scaffold(body: Center(child: Text('يجب تسجيل الدخول')));
-    }
-
-    final userService = UserService();
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
-        title: const Text('الرئيسية'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await AuthService().logout();
-              if (!context.mounted) return;
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ],
+        title: const Text('تطبيق المكافآت', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.indigo,
+        elevation: 0,
       ),
-      body: StreamBuilder<UserModel?>(
-        stream: userService.getUserStream(firebaseUser.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final user = snapshot.data;
-          if (user == null) {
-            return const Center(child: Text('لم يتم العثور على بيانات المستخدم'));
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                'مرحبًا ${user.name}',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Column(
+          children: [
+            // بطاقة الرصيد
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.indigo, Colors.blueAccent],
                 ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                ],
               ),
-              const SizedBox(height: 30),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.stars, size: 60),
-                      const SizedBox(height: 10),
-                      const Text('نقاطك', style: TextStyle(fontSize: 18)),
-                      const SizedBox(height: 10),
-                      Text(
-                        '${user.pointsBalance}',
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                        ),
+              child: Column(
+                children: [
+                  const Text('رصيد النقاط الحالي', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$userPoints نقطة',
+                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            // قائمة المهام التسعة
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.15,
+                ),
+                itemCount: rewardTasks.length,
+                itemBuilder: (context, index) {
+                  final task = rewardTasks[index];
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: InkWell(
+                      onTap: () => _handleTaskTap(task['action']),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(task['icon'], size: 38, color: task['color']),
+                          const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              task['title'],
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.account_balance_wallet),
-                  title: const Text('استرداد النقاط'),
-                  subtitle: const Text('حوّل نقاطك إلى مكافأة'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.pushNamed(context, '/wallet'),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.pushNamed(context, '/rewards'),
-                icon: const Icon(Icons.play_circle),
-                label: const Text('شاهد إعلانًا واربح نقاط'),
-              ),
-              const SizedBox(height: 20),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.leaderboard),
-                  title: const Text('التصنيف الأسبوعي'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LeaderboardPage(),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.list_alt),
-                  title: const Text('آخر الاستردادات'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WithdrawalsFeedPage(),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
