@@ -57,8 +57,6 @@ class AdService {
       return;
     }
 
-    bool rewardEarned = false;
-
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
@@ -71,8 +69,7 @@ class AdService {
     );
 
     ad.show(
-      onUserEarnedReward: (AdWithoutViewUnscoped ad, RewardItem reward) async {
-        rewardEarned = true;
+      onUserEarnedReward: (RewardedAd ad, RewardItem reward) async {
         try {
           await _functions.httpsCallable('grantAdReward').call({
             'eventId': eventId,
@@ -85,6 +82,21 @@ class AdService {
     );
 
     _rewardedAd = null;
+  }
+
+  /// دالة إضافية متوافقة مع الاستدعاآت التلقائية باسم showRewardedAd
+  Future<void> showRewardedAd({
+    required String eventId,
+    required VoidCallback onUserEarnedReward,
+    required VoidCallback onAdClosed,
+    required Function(Object error) onFailed,
+  }) async {
+    await showAd(
+      eventId: eventId,
+      onUserEarnedReward: onUserEarnedReward,
+      onAdClosed: onAdClosed,
+      onFailed: onFailed,
+    );
   }
 
   void dispose() {
