@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/reward_service.dart';
 import '../withdraw_page.dart';
+import '../subscription_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -138,6 +139,11 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const WithdrawPage()),
+      );
+    } else if (action == 'offers') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SubscriptionPage()),
       );
     } else if (action == 'daily_bonus') {
       _showLoadingDialog();
