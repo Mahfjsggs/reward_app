@@ -3,58 +3,155 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ============================================================
+    // USERS
+    // ============================================================
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
 
-      allow create: if request.auth != null && request.auth.uid == userId;
+      // المستخدم يقرأ بيانات حسابه فقط
+      allow read: if isSignedIn()
+                  && request.auth.uid == userId;
 
-      allow update: if request.auth != null
-        && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys()
-             .hasAny([
-               'pointsBalance',
-               'totalPointsEarned',
-               'totalPointsSpent',
-               'withdrawableBalance',
-               'role',
-               'status'
-             ]);
+      // إنشاء الحساب:
+      // المستخدم يستطيع إنشاء وثيقته فقط،
+      // ولا يستطيع إنشاء رصيد أو صلاحيات لنفسه.
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId
+                    && !request.resource.data.keys().hasAny([
+                      'pointsBalance',
+                      'totalPointsEarned',
+                      'totalPointsSpent',
+                      'withdrawableBalance',
+                      'role',
+                      'status'
+                    ]);
 
+      // تحديث بيانات الحساب:
+      // المستخدم يستطيع تعديل بياناته العادية فقط.
+      // جميع بيانات النقاط والرصيد والصلاحيات محمية.
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasAny([
+                           'pointsBalance',
+                           'totalPointsEarned',
+                           'totalPointsSpent',
+                           'withdrawableBalance',
+                           'role',
+                           'status'
+                         ]);
+
+      // لا يمكن حذف الحساب من Firestore مباشرة
       allow delete: if false;
     }
 
-    // كل الكتابة على هذه المجموعات تمر حصرًا عبر Cloud Functions
+
+    // ============================================================
+    // AD EVENTS
+    // ============================================================
     match /adEvents/{eventId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow write: if false;
+
+      // المستخدم يستطيع قراءة أحداثه فقط
+      allow read: if isSignedIn()
+                  && resource.data.userId == request.auth.uid;
+
+      // لا يستطيع المستخدم إنشاء أو تعديل أو حذف أحداث الإعلانات
+      // الكتابة تتم فقط من Cloud Functions
+      allow create, update, delete: if false;
     }
 
-    match /pointTransactions/{txId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow write: if false;
+
+    // ============================================================
+    // POINT TRANSACTIONS
+    // ============================================================
+    match /pointTransactions/{transactionId} {
+
+      // المستخدم يستطيع مشاهدة معاملاته فقط
+      allow read: if isSignedIn()
+                  && resource.data.userId == request.auth.uid;
+
+      // منع المستخدم من صناعة معاملات أو نقاط بنفسه
+      allow create, update, delete: if false;
     }
 
+
+    // ============================================================
+    // WITHDRAWALS
+    // ============================================================
     match /withdrawals/{withdrawalId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow write: if false;
+
+      // المستخدم يستطيع مشاهدة طلبات السحب الخاصة به فقط
+      allow read: if isSignedIn()
+                  && resource.data.userId == request.auth.uid;
+
+      // لا يستطيع إنشاء أو تعديل أو حذف طلب السحب مباشرة
+      // سنجعل ذلك عن طريق Cloud Functions
+      allow create, update, delete: if false;
     }
 
+
+    // ============================================================
+    // REVENUE REPORTS
+    // ============================================================
     match /revenueReports/{reportId} {
+
+      // هذه البيانات للسيرفر فقط
       allow read, write: if false;
     }
 
+
+    // ============================================================
+    // REWARD POOLS
+    // ============================================================
     match /rewardPools/{poolId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+
+      // القراءة متاحة للمستخدم المسجل فقط
+      allow read: if isSignedIn();
+
+      // الكتابة للسيرفر فقط
+      allow create, update, delete: if false;
     }
 
+
+    // ============================================================
+    // WEEKLY LEADERBOARDS
+    // ============================================================
     match /weeklyLeaderboards/{weekId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+
+      // المستخدم المسجل يستطيع مشاهدة الترتيب
+      allow read: if isSignedIn();
+
+      // لا يستطيع المستخدم التلاعب بالترتيب
+      allow create, update, delete: if false;
     }
 
+
+    // ============================================================
+    // ADMIN LOGS
+    // ============================================================
     match /adminLogs/{logId} {
+
+      // سجلات الإدارة للسيرفر فقط
       allow read, write: if false;
     }
+
+
+    // ============================================================
+    // DEFAULT DENY
+    // ============================================================
+    // أي Collection جديدة ننسى نضيف لها Rule
+    // ستكون مغلقة تلقائياً.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+
+  // ==============================================================
+  // HELPER
+  // ==============================================================
+  function isSignedIn() {
+    return request.auth != null;
   }
 }
