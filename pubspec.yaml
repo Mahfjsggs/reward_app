@@ -1,34 +1,79 @@
-name: reward_app
-description: Reward application
-publish_to: "none"
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-version: 1.0.0+1
+class AdService {
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
 
-environment:
-  sdk: ">=3.5.0 <4.0.0"
+  // معرف إعلان الفيديو التجريبي المعتمد رسمياً من Google AdMob
+  final String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
 
-dependencies:
-  flutter:
-    sdk: flutter
+  // تهيئة AdMob عند تشغيل التطبيق
+  static Future<void> initialize() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await MobileAds.instance.initialize();
+  }
 
-  cupertino_icons: ^1.0.8
+  // تحميل إعلان الفيديو بمكافأة (Rewarded Ad)
+  void loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: _rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
+  }
 
-  firebase_core: ^3.15.0
-  firebase_auth: ^5.6.0
-  cloud_firestore: ^5.6.0
-  cloud_functions: ^5.1.0
+  // عرض الإعلان وإضافة النقاط للمستخدم فور اكتمال المشاهدة
+  void showRewardedAd({
+    required BuildContext context,
+    required Function(int pointsEarned) onRewardEarned,
+    required Function() onAdFailed,
+  }) {
+    if (!_isRewardedAdReady || _rewardedAd == null) {
+      onAdFailed();
+      loadRewardedAd(); // إعادة التحميل للمرة القادمة
+      return;
+    }
 
-  
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        ad.dispose();
+        loadRewardedAd(); // تحميل إعلان جديد بعد إغلاق الحالي
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        ad.dispose();
+        loadRewardedAd();
+        onAdFailed();
+      },
+    );
 
-  provider: ^6.1.2
-  intl: ^0.19.0
-  uuid: ^4.5.1
+    _rewardedAd!.show(
+      onUserEarnedReward: (AdWithoutViewUnscoped ad, RewardItem reward) async {
+        const int rewardAmount = 10; // عدد النقاط المضافة عند مشاهدة الإعلان
+        final userId = FirebaseAuth.instance.currentUser?.uid;
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
+        if (userId != null) {
+          await FirebaseFirestore.instance.collection('users').doc(userId).update({
+            'points': FieldValue.increment(rewardAmount),
+          });
+        }
 
-  flutter_lints: ^5.0.0
+        onRewardEarned(rewardAmount);
+      },
+    );
 
-flutter:
-  uses-material-design: true
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
+  }
+}
