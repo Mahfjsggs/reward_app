@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app/app.dart';
 import 'firebase_options.dart';
+import 'services/ad_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +11,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // تهيئة AdMob لعرض الإعلانات
+  await AdService.initialize();
 
   runApp(const RewardApp());
 }
