@@ -15,68 +15,122 @@ class _HomePageState extends State<HomePage> {
   final RewardService _rewardService = RewardService();
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
-  final List<Map<String, dynamic>> rewardTasks = [
-    {
-      'title': 'سحب الأرباح',
-      'icon': Icons.account_balance_wallet_rounded,
-      'color': Colors.green,
-      'action': 'withdraw',
-    },
-    {
-      'title': 'شاهد إعلان',
-      'icon': Icons.play_circle_fill_rounded,
-      'color': Colors.redAccent,
-      'action': 'watch_ad',
-    },
-    {
-      'title': 'الاستبيانات',
-      'icon': Icons.assignment_rounded,
-      'color': Colors.blueAccent,
-      'action': 'surveys',
-    },
-    {
-      'title': 'الألعاب واربح',
-      'icon': Icons.sports_esports_rounded,
-      'color': Colors.purple,
-      'action': 'games',
-    },
-    {
-      'title': 'نزّل تطبيقات واربح',
-      'icon': Icons.get_app_rounded,
-      'color': Colors.teal,
-      'action': 'download_apps',
-    },
-    {
-      'title': 'العروض والاشتراكات',
-      'icon': Icons.local_offer_rounded,
-      'color': Colors.orange,
-      'action': 'offers',
-    },
-    {
-      'title': 'مهام بسيطة',
-      'icon': Icons.check_box_rounded,
-      'color': Colors.cyan,
-      'action': 'simple_tasks',
-    },
-    {
-      'title': 'مكافأة الدخول اليومية',
-      'icon': Icons.local_fire_department_rounded,
-      'color': Colors.deepOrange,
-      'action': 'daily_bonus',
-    },
-    {
-      'title': 'الإحالة للأصدقاء',
-      'icon': Icons.group_add_rounded,
-      'color': Colors.indigo,
-      'action': 'referral',
-    },
-    {
-      'title': 'التصنيف الأسبوعي',
-      'icon': Icons.emoji_events_rounded,
-      'color': Colors.amber,
-      'action': 'leaderboard',
-    },
-  ];
+  // متغير للتحكم باللغة (تلقائياً عربي)
+  bool isArabic = true;
+
+  // نصوص اللغة العربية والإنجليزية
+  Map<String, Map<String, String>> get _localizedTexts => {
+        'ar': {
+          'app_title': 'تطبيق المكافآت',
+          'points_balance': 'رصيد النقاط الحالي',
+          'points_unit': 'نقطة',
+          'withdraw': 'سحب الأرباح',
+          'watch_ad': 'شاهد إعلان',
+          'surveys': 'الاستبيانات',
+          'games': 'الألعاب واربح',
+          'download_apps': 'نزّل تطبيقات واربح',
+          'offers': 'العروض والاشتراكات',
+          'simple_tasks': 'مهام بسيطة',
+          'daily_bonus': 'مكافأة الدخول اليومية',
+          'referral': 'الإحالة للأصدقاء',
+          'leaderboard': 'التصنيف الأسبوعي',
+          'dev_message': 'هذا القسم قيد التطوير وسيتم إتاحته قريباً!',
+          'enter_code': 'إدخال رمز الإحالة',
+          'hint_code': 'أدخل الكود هنا',
+          'cancel': 'إلغاء',
+          'confirm': 'تأكيد',
+          'service_unavailable': 'عذراً، الخدمة غير متوفرة حالياً.',
+        },
+        'en': {
+          'app_title': 'Rewards App',
+          'points_balance': 'Current Points Balance',
+          'points_unit': 'Points',
+          'withdraw': 'Withdraw Profits',
+          'watch_ad': 'Watch Ad',
+          'surveys': 'Surveys',
+          'games': 'Play & Earn',
+          'download_apps': 'Download Apps',
+          'offers': 'Offers & Subscriptions',
+          'simple_tasks': 'Simple Tasks',
+          'daily_bonus': 'Daily Bonus',
+          'referral': 'Refer Friends',
+          'leaderboard': 'Weekly Leaderboard',
+          'dev_message': 'This section is under development and will be available soon!',
+          'enter_code': 'Enter Referral Code',
+          'hint_code': 'Enter code here',
+          'cancel': 'Cancel',
+          'confirm': 'Confirm',
+          'service_unavailable': 'Sorry, service is currently unavailable.',
+        },
+      };
+
+  String _getText(String key) {
+    final lang = isArabic ? 'ar' : 'en';
+    return _localizedTexts[lang]?[key] ?? key;
+  }
+
+  List<Map<String, dynamic>> get rewardTasks => [
+        {
+          'title': _getText('withdraw'),
+          'icon': Icons.account_balance_wallet_rounded,
+          'color': Colors.green,
+          'action': 'withdraw',
+        },
+        {
+          'title': _getText('watch_ad'),
+          'icon': Icons.play_circle_fill_rounded,
+          'color': Colors.redAccent,
+          'action': 'watch_ad',
+        },
+        {
+          'title': _getText('surveys'),
+          'icon': Icons.assignment_rounded,
+          'color': Colors.blueAccent,
+          'action': 'surveys',
+        },
+        {
+          'title': _getText('games'),
+          'icon': Icons.sports_esports_rounded,
+          'color': Colors.purple,
+          'action': 'games',
+        },
+        {
+          'title': _getText('download_apps'),
+          'icon': Icons.get_app_rounded,
+          'color': Colors.teal,
+          'action': 'download_apps',
+        },
+        {
+          'title': _getText('offers'),
+          'icon': Icons.local_offer_rounded,
+          'color': Colors.orange,
+          'action': 'offers',
+        },
+        {
+          'title': _getText('simple_tasks'),
+          'icon': Icons.check_box_rounded,
+          'color': Colors.cyan,
+          'action': 'simple_tasks',
+        },
+        {
+          'title': _getText('daily_bonus'),
+          'icon': Icons.local_fire_department_rounded,
+          'color': Colors.deepOrange,
+          'action': 'daily_bonus',
+        },
+        {
+          'title': _getText('referral'),
+          'icon': Icons.group_add_rounded,
+          'color': Colors.indigo,
+          'action': 'referral',
+        },
+        {
+          'title': _getText('leaderboard'),
+          'icon': Icons.emoji_events_rounded,
+          'color': Colors.amber,
+          'action': 'leaderboard',
+        },
+      ];
 
   // التعامل مع الضغط على البطاقات
   Future<void> _handleTaskTap(String action) async {
@@ -94,12 +148,12 @@ class _HomePageState extends State<HomePage> {
       if (result['success'] == true) {
         _showMessageSnackBar(result['message']);
       } else {
-        _showMessageSnackBar('عذراً، الخدمة غير متوفرة حالياً.');
+        _showMessageSnackBar(_getText('service_unavailable'));
       }
     } else if (action == 'referral') {
       _showReferralDialog();
     } else {
-      _showMessageSnackBar('هذا القسم قيد التطوير وسيتم إتاحته قريباً!');
+      _showMessageSnackBar(_getText('dev_message'));
     }
   }
 
@@ -109,18 +163,18 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('إدخال رمز الإحالة', textAlign: TextAlign.center),
+        title: Text(_getText('enter_code'), textAlign: TextAlign.center),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'أدخل الكود هنا',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: _getText('hint_code'),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(_getText('cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -134,7 +188,7 @@ class _HomePageState extends State<HomePage> {
                 _showMessageSnackBar(result['message']);
               }
             },
-            child: const Text('تأكيد'),
+            child: Text(_getText('confirm')),
           ),
         ],
       ),
@@ -157,19 +211,32 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final tasks = rewardTasks;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
-        title: const Text('تطبيق المكافآت', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(_getText('app_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.indigo,
         elevation: 0,
+        actions: [
+          // زر تغيير اللغة في شريط التطبيق العلوي
+          IconButton(
+            icon: const Icon(Icons.language),
+            tooltip: 'تغيير اللغة / Change Language',
+            onPressed: () {
+              setState(() {
+                isArabic = !isArabic;
+              });
+            },
+          ),
+        ],
       ),
       body: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         child: Column(
           children: [
-            // كارت عرض النقاط المباشر من الفايربيس
+            // كارت عرض النقاط
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(16),
@@ -185,10 +252,11 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Column(
                 children: [
-                  const Text('رصيد النقاط الحالي', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  Text(_getText('points_balance'), style: const TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 8),
                   userId == null
-                      ? const Text('0 نقطة', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
+                      ? Text('0 ${_getText('points_unit')}',
+                          style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
                       : StreamBuilder<DocumentSnapshot>(
                           stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
                           builder: (context, snapshot) {
@@ -205,7 +273,7 @@ class _HomePageState extends State<HomePage> {
                               points = data?['points'] ?? 0;
                             }
                             return Text(
-                              '$points نقطة',
+                              '$points ${_getText('points_unit')}',
                               style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                             );
                           },
@@ -222,9 +290,9 @@ class _HomePageState extends State<HomePage> {
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.15,
                 ),
-                itemCount: rewardTasks.length,
+                itemCount: tasks.length,
                 itemBuilder: (context, index) {
-                  final task = rewardTasks[index];
+                  final task = tasks[index];
                   return Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
