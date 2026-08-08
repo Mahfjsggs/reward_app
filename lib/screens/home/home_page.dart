@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/reward_service.dart';
 import '../withdraw_page.dart';
 
@@ -10,8 +12,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int userPoints = 0;
   final RewardService _rewardService = RewardService();
+  final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
   final List<Map<String, dynamic>> rewardTasks = [
     {
@@ -167,6 +169,7 @@ class _HomePageState extends State<HomePage> {
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
+            // كارت عرض النقاط المباشر من الفايربيس
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(16),
@@ -184,10 +187,29 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const Text('رصيد النقاط الحالي', style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Text(
-                    '$userPoints نقطة',
-                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
+                  userId == null
+                      ? const Text('0 نقطة', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold))
+                      : StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const SizedBox(
+                                height: 32,
+                                width: 32,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              );
+                            }
+                            int points = 0;
+                            if (snapshot.hasData && snapshot.data!.exists) {
+                              final data = snapshot.data!.data() as Map<String, dynamic>?;
+                              points = data?['points'] ?? 0;
+                            }
+                            return Text(
+                              '$points نقطة',
+                              style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
                 ],
               ),
             ),
