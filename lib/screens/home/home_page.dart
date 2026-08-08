@@ -24,7 +24,18 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _adService.loadRewardedAd();
+    _loadAd();
+  }
+
+  void _loadAd() {
+    _adService.loadRewardedAd(
+      onLoaded: () {
+        // الإعلان أصبح جاهزاً للعرض
+      },
+      onFailed: (error) {
+        debugPrint('Ad failed to load: $error');
+      },
+    );
   }
 
   Map<String, Map<String, String>> get _localizedTexts => {
@@ -49,7 +60,7 @@ class _HomePageState extends State<HomePage> {
           'confirm': 'تأكيد',
           'service_unavailable': 'عذراً، الخدمة غير متوفرة حالياً.',
           'ad_loading_error': 'الإعلان غير جاهز حالياً، يرجى المحاولة بعد قليل.',
-          'ad_success_reward': 'مبروك! كسبت ',
+          'ad_success_reward': 'مبروك! كسبت المكافأة بنجاح',
         },
         'en': {
           'app_title': 'Rewards App',
@@ -72,7 +83,7 @@ class _HomePageState extends State<HomePage> {
           'confirm': 'Confirm',
           'service_unavailable': 'Sorry, service is currently unavailable.',
           'ad_loading_error': 'Ad is not ready yet, please try again in a moment.',
-          'ad_success_reward': 'Congratulations! You earned ',
+          'ad_success_reward': 'Congratulations! You earned your reward',
         },
       };
 
@@ -186,15 +197,31 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } else if (action == 'watch_ad') {
-      _adService.showRewardedAd(
-        context: context,
-        onRewardEarned: (pointsEarned) {
-          _showMessageSnackBar('${_getText('ad_success_reward')} $pointsEarned ${_getText('points_unit')}!');
-        },
-        onAdFailed: () {
+      _showLoadingDialog();
+      try {
+        final eventId = await _adService.startAdSession();
+        if (!mounted) return;
+        Navigator.pop(context); // إغلاق مؤشر التحميل
+
+        await _adService.showRewardedAd(
+          eventId: eventId,
+          onUserEarnedReward: () {
+            _showMessageSnackBar(_getText('ad_success_reward'));
+          },
+          onAdClosed: () {
+            _loadAd(); // إعادة تحميل إعلان جديد بعد الإغلاق
+          },
+          onFailed: (error) {
+            _showMessageSnackBar(_getText('ad_loading_error'));
+            _loadAd();
+          },
+        );
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // إغلاق مؤشر التحميل في حال حدوث خطأ
           _showMessageSnackBar(_getText('ad_loading_error'));
-        },
-      );
+        }
+      }
     } else if (action == 'daily_bonus') {
       _showLoadingDialog();
       final result = await _rewardService.claimDailyBonus();
