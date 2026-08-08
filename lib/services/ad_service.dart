@@ -1,47 +1,79 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
 
-  bool isAdReady = true;
+  // معرف إعلان الفيديو التجريبي المعتمد رسمياً من Google AdMob
+  final String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
 
-  Future<void> loadRewardedAd({
-    required void Function() onLoaded,
-    required void Function(String error) onFailed,
-  }) async {
-    onLoaded();
+  // تهيئة AdMob عند تشغيل التطبيق
+  static Future<void> initialize() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await MobileAds.instance.initialize();
   }
 
-  Future<String> startAdSession() async {
-    final result = await _functions
-        .httpsCallable('startAdSession')
-        .call({'adNetwork': 'admob', 'adType': 'rewarded'});
-
-    return result.data['eventId'] as String;
+  // تحميل إعلان الفيديو بمكافأة (Rewarded Ad)
+  void loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: _rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
   }
 
-  Future<void> showAd({
-    required String eventId,
-    required void Function() onUserEarnedReward,
-    required void Function() onAdClosed,
-    required void Function(String error) onFailed,
-  }) async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    try {
-      await _confirmAdCompletion(eventId);
-      onUserEarnedReward();
-      onAdClosed();
-    } catch (e) {
-      onFailed(e.toString());
+  // عرض الإعلان وإضافة النقاط للمستخدم فور اكتمال المشاهدة
+  void showRewardedAd({
+    required BuildContext context,
+    required Function(int pointsEarned) onRewardEarned,
+    required Function() onAdFailed,
+  }) {
+    if (!_isRewardedAdReady || _rewardedAd == null) {
+      onAdFailed();
+      loadRewardedAd(); // إعادة التحميل للمرة القادمة
+      return;
     }
-  }
 
-  Future<void> _confirmAdCompletion(String eventId) async {
-    await _functions
-        .httpsCallable('grantAdReward')
-        .call({'eventId': eventId});
-  }
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        ad.dispose();
+        loadRewardedAd(); // تحميل إعلان جديد بعد إغلاق الحالي
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        ad.dispose();
+        loadRewardedAd();
+        onAdFailed();
+      },
+    );
 
-  void dispose() {}
+    _rewardedAd!.show(
+      onUserEarnedReward: (AdWithoutViewUnscoped ad, RewardItem reward) async {
+        const int rewardAmount = 10; // عدد النقاط المضافة عند مشاهدة الإعلان
+        final userId = FirebaseAuth.instance.currentUser?.uid;
+
+        if (userId != null) {
+          await FirebaseFirestore.instance.collection('users').doc(userId).update({
+            'points': FieldValue.increment(rewardAmount),
+          });
+        }
+
+        onRewardEarned(rewardAmount);
+      },
+    );
+
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
+  }
 }
