@@ -1,73 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class AdService {
   RewardedAd? _rewardedAd;
-  bool _isRewardedAdReady = false;
 
   final String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
     await MobileAds.instance.initialize();
   }
 
-  void loadRewardedAd() {
+  void loadRewardedAd({
+    required VoidCallback onLoaded,
+    required Function(Object error) onFailed,
+  }) {
     RewardedAd.load(
       adUnitId: _rewardedAdUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
           _rewardedAd = ad;
-          _isRewardedAdReady = true;
+          onLoaded();
         },
         onAdFailedToLoad: (LoadAdError error) {
           _rewardedAd = null;
-          _isRewardedAdReady = false;
+          onFailed(error);
         },
       ),
     );
   }
 
-  /// يعرض الإعلان فقط. لا يضيف أي نقاط هنا مباشرة —
-  /// إضافة النقاط تصير حصرًا عبر Cloud Functions (startAdSession +
-  /// grantAdReward) بعد تأكيد مدة المشاهدة من طرف السيرفر.
-  void showRewardedAd({
-    required BuildContext context,
-    required Function() onAdCompleted,
-    required Function() onAdFailed,
-  }) {
-    if (!_isRewardedAdReady || _rewardedAd == null) {
-      onAdFailed();
-      loadRewardedAd();
+  /// يبدأ جلسة إعلان موثقة بالسيرفر قبل عرض الإعلان،
+  /// ويرجع eventId يُستخدم لاحقًا للتحقق من صحة المشاهدة.
+  Future<String> startAdSession() async {
+    final result = await _functions.httpsCallable('startAdSession').call({
+      'adNetwork': 'admob',
+      'adType': 'rewarded',
+    });
+    return result.data['eventId'] as String;
+  }
+
+  /// يعرض الإعلان، وعند اكتمال المشاهدة يتحقق من السيرفر
+  /// (grantAdReward) قبل اعتبار المستخدم مستحقًا للنقاط.
+  Future<void> showAd({
+    required String eventId,
+    required VoidCallback onUserEarnedReward,
+    required VoidCallback onAdClosed,
+    required Function(Object error) onFailed,
+  }) async {
+    final ad = _rewardedAd;
+    if (ad == null) {
+      onFailed('الإعلان غير جاهز');
       return;
     }
 
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+    bool rewardEarned = false;
+
+    ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
-        loadRewardedAd();
+        onAdClosed();
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
         ad.dispose();
-        loadRewardedAd();
-        onAdFailed();
+        onFailed(error);
       },
     );
 
-    _rewardedAd!.show(
-      onUserEarnedReward: (AdWithoutViewUnscoped ad, RewardItem reward) {
-        onAdCompleted();
+    ad.show(
+      onUserEarnedReward: (AdWithoutViewUnscoped ad, RewardItem reward) async {
+        rewardEarned = true;
+        try {
+          await _functions.httpsCallable('grantAdReward').call({
+            'eventId': eventId,
+          });
+          onUserEarnedReward();
+        } catch (e) {
+          onFailed(e);
+        }
       },
     );
 
     _rewardedAd = null;
-    _isRewardedAdReady = false;
   }
 
   void dispose() {
     _rewardedAd?.dispose();
     _rewardedAd = null;
-    _isRewardedAdReady = false;
   }
 }
