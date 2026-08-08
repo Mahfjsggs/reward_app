@@ -5,6 +5,7 @@ import '../../services/reward_service.dart';
 import '../../services/ad_service.dart';
 import '../withdraw_page.dart';
 import '../subscription_page.dart';
+import '../offerwall_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -23,7 +24,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // تحميل الإعلان مسبقاً ليكون جاهزاً فور الضغط
     _adService.loadRewardedAd();
   }
 
@@ -155,8 +155,37 @@ class _HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(builder: (context) => const SubscriptionPage()),
       );
+    } else if (action == 'surveys') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OfferwallPage(
+            title: _getText('surveys'),
+            offerType: 'surveys',
+          ),
+        ),
+      );
+    } else if (action == 'games') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OfferwallPage(
+            title: _getText('games'),
+            offerType: 'games',
+          ),
+        ),
+      );
+    } else if (action == 'download_apps') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OfferwallPage(
+            title: _getText('download_apps'),
+            offerType: 'apps',
+          ),
+        ),
+      );
     } else if (action == 'watch_ad') {
-      // تشغيل إعلان المكافأة
       _adService.showRewardedAd(
         context: context,
         onRewardEarned: (pointsEarned) {
