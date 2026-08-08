@@ -69,7 +69,7 @@ class AdService {
     );
 
     ad.show(
-      onUserEarnedReward: (RewardedAd ad, RewardItem reward) async {
+      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) async {
         try {
           await _functions.httpsCallable('grantAdReward').call({
             'eventId': eventId,
