@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/reward_service.dart';
+import '../withdraw_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -78,8 +79,10 @@ class _HomePageState extends State<HomePage> {
   // التعامل مع الضغط على البطاقات
   Future<void> _handleTaskTap(String action) async {
     if (action == 'withdraw') {
-      _showMessageSnackBar('جاري فتح صفحة سحب الأرباح...');
-      // سنقوم بربط التوجيه لصفحة السحب فور إنشائها في الخطوة القادمة
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const WithdrawPage()),
+      );
     } else if (action == 'daily_bonus') {
       _showLoadingDialog();
       final result = await _rewardService.claimDailyBonus();
