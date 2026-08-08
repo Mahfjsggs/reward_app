@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/reward_service.dart';
+import '../../services/ad_service.dart';
 import '../withdraw_page.dart';
 import '../subscription_page.dart';
 
@@ -14,12 +15,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final RewardService _rewardService = RewardService();
+  final AdService _adService = AdService();
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
-  // متغير للتحكم باللغة (تلقائياً عربي)
   bool isArabic = true;
 
-  // نصوص اللغة العربية والإنجليزية
+  @override
+  void initState() {
+    super.initState();
+    // تحميل الإعلان مسبقاً ليكون جاهزاً فور الضغط
+    _adService.loadRewardedAd();
+  }
+
   Map<String, Map<String, String>> get _localizedTexts => {
         'ar': {
           'app_title': 'تطبيق المكافآت',
@@ -41,6 +48,8 @@ class _HomePageState extends State<HomePage> {
           'cancel': 'إلغاء',
           'confirm': 'تأكيد',
           'service_unavailable': 'عذراً، الخدمة غير متوفرة حالياً.',
+          'ad_loading_error': 'الإعلان غير جاهز حالياً، يرجى المحاولة بعد قليل.',
+          'ad_success_reward': 'مبروك! كسبت ',
         },
         'en': {
           'app_title': 'Rewards App',
@@ -62,6 +71,8 @@ class _HomePageState extends State<HomePage> {
           'cancel': 'Cancel',
           'confirm': 'Confirm',
           'service_unavailable': 'Sorry, service is currently unavailable.',
+          'ad_loading_error': 'Ad is not ready yet, please try again in a moment.',
+          'ad_success_reward': 'Congratulations! You earned ',
         },
       };
 
@@ -133,7 +144,6 @@ class _HomePageState extends State<HomePage> {
         },
       ];
 
-  // التعامل مع الضغط على البطاقات
   Future<void> _handleTaskTap(String action) async {
     if (action == 'withdraw') {
       Navigator.push(
@@ -144,6 +154,17 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const SubscriptionPage()),
+      );
+    } else if (action == 'watch_ad') {
+      // تشغيل إعلان المكافأة
+      _adService.showRewardedAd(
+        context: context,
+        onRewardEarned: (pointsEarned) {
+          _showMessageSnackBar('${_getText('ad_success_reward')} $pointsEarned ${_getText('points_unit')}!');
+        },
+        onAdFailed: () {
+          _showMessageSnackBar(_getText('ad_loading_error'));
+        },
       );
     } else if (action == 'daily_bonus') {
       _showLoadingDialog();
@@ -163,7 +184,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // نافذة إدخال كود الإحالة
   void _showReferralDialog() {
     final TextEditingController controller = TextEditingController();
     showDialog(
@@ -226,7 +246,6 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.indigo,
         elevation: 0,
         actions: [
-          // زر تغيير اللغة في شريط التطبيق العلوي
           IconButton(
             icon: const Icon(Icons.language),
             tooltip: 'تغيير اللغة / Change Language',
@@ -242,7 +261,6 @@ class _HomePageState extends State<HomePage> {
         textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         child: Column(
           children: [
-            // كارت عرض النقاط
             Container(
               width: double.infinity,
               margin: const EdgeInsets.all(16),
