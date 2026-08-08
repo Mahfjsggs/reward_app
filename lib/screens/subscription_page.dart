@@ -8,7 +8,7 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> {
-  String _selectedPlan = 'weekly'; // 'weekly' or 'monthly'
+  String _selectedPlan = 'weekly';
 
   void _processSubscription() {
     final planName = _selectedPlan == 'weekly' ? 'الأسبوعي (\$1)' : 'الشهري (\$10)';
@@ -51,7 +51,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // كارت العرض الترويجي
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -66,12 +65,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     Icon(Icons.workspace_premium, size: 50, color: Colors.white),
                     SizedBox(height: 8),
                     Text(
-                      'انضم إلى العضوية الممتازة VIP',
+                      'عضوية VIP المميزة',
                       style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'ضاعف أرباحك وتخلص من الإعلانات المزعجة',
+                      'ضاعف أرباحك وتصفح بدون إعلانات منبثقة',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
@@ -79,20 +78,18 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               ),
               const SizedBox(height: 20),
 
-              // مميزات الاشتراك
               const Align(
                 alignment: Alignment.centerRight,
                 child: Text('مميزات الاشتراك:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 10),
-              _buildFeatureRow(Icons.bolt, 'مضاعفة النقاط (2x) على جميع المهام'),
-              _buildFeatureRow(Icons.block, 'تصفح بدون إعلانات بينية مزعجة'),
-              _buildFeatureRow(Icons.card_giftcard, 'مكافأة دخول يومية ضخمة'),
-              _buildFeatureRow(Icons.speed, 'أولوية ومعالجة سريعة لطلبات السحب'),
+              _buildFeatureRow(Icons.bolt, 'مضاعفة النقاط (2x) على مشاهدة الإعلانات والمهام'),
+              _buildFeatureRow(Icons.block, 'إلغاء الإعلانات المنبثقة والمفاجئة أثناء التصفح'),
+              _buildFeatureRow(Icons.card_giftcard, 'مكافأة دخول يومية مضاعفة'),
+              _buildFeatureRow(Icons.speed, 'أولوية وسرعة فائقة في معالجة طلبات السحب'),
 
               const Spacer(),
 
-              // خيارات الخطط
               Row(
                 children: [
                   Expanded(
@@ -116,7 +113,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               ),
               const SizedBox(height: 16),
 
-              // زر الاشتراك
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -146,7 +142,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         children: [
           Icon(icon, color: Colors.amber.shade800, size: 22),
           const SizedBox(width: 10),
-          Text(text, style: const TextStyle(fontSize: 14)),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
